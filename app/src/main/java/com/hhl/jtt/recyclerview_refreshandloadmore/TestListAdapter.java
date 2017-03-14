@@ -21,7 +21,7 @@ import butterknife.ButterKnife;
 public class TestListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private LayoutInflater layoutInflater;
     private static final int VIEW_ITEM = 0;  //普通Item View
-    private static final int TYPE_FOOTER = 1;  //顶部FootView
+    private static final int TYPE_FOOTER = 1;  //底部FootView
     private static final int TYPE_FINISH = -1;  //完成FootView
     private List list;
     private int lastVisibleItemPosition;  //最后各一个项目位置
@@ -29,7 +29,7 @@ public class TestListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private MyProgressViewHolder mpHolder;
     private RecyclerView.LayoutParams param;
     private ILoadMoreData iLoadMoreData;
-    private int totalNum = 20;//测试总条数
+    private int totalNum = 20;//测试总条数，利用该值判断是否加载更多，可以通过外部设置该值
 
     public TestListAdapter(Context context, final ILoadMoreData iLoadMoreData,
                            RecyclerView recyclerView, List list) {
@@ -41,11 +41,13 @@ public class TestListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
+                //判断是否到底部了
                 if (newState ==RecyclerView.SCROLL_STATE_IDLE &&
                         lastVisibleItemPosition + 1 == getItemCount()) {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
+                            //如果还有数据则加载更多
                             if(!getIsFinish()){
                                 iLoadMoreData.loadMoreData();
                             }
@@ -56,6 +58,7 @@ public class TestListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView,dx, dy);
+                //获取最后一个项目位置
                 lastVisibleItemPosition =linearLayoutManager.findLastVisibleItemPosition();
             }
         });
@@ -65,11 +68,16 @@ public class TestListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return list.size() == totalNum;
     }
 
+    /**
+     * 由于包含加载更多项，因此需要加1
+     * @return
+     */
     @Override
     public int getItemCount() {
         return list == null ? 0 : list.size()+1;
     }
 
+    //根据position判断显示item的类型
     @Override
     public int getItemViewType(int position) {
         if(position + 1 != getItemCount()){
